@@ -79,6 +79,11 @@ def directional_accuracy(y_pred, y_true):
 # -----------------------------
 # Training
 # -----------------------------
+def directional_accuracy(y_pred, y_true):
+    pred_sign = torch.sign(y_pred)
+    true_sign = torch.sign(y_true)
+    return (pred_sign == true_sign).float().mean().item()
+
 def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -151,11 +156,13 @@ def train():
         val_loss /= len(val_loader)
         preds_all = torch.cat(preds_all)
         y_all = torch.cat(y_all)
+        acc = directional_accuracy(preds_all, y_all)
+
 
         train_losses.append(train_loss)
         val_losses.append(val_loss)
 
-        print(f"Epoch {epoch+1}/{epochs} | train {train_loss:.6f} | val {val_loss:.6f}")
+        print(f"Epoch {epoch+1}/{epochs} | train {train_loss:.6f} | val {val_loss:.6f} | acc {acc:.4f}")
 
         # ---- save best
         if val_loss < best_val:
@@ -184,7 +191,9 @@ def train():
     plt.ylabel("loss")
     plt.legend()
     plt.title("Training vs Validation Loss")
-    plt.show()
+    plt.savefig("loss_plot.png")
+    plt.close()
+
 
     # -----------------------------
     # Plot 2: Predictions vs True (returns)
@@ -196,7 +205,9 @@ def train():
     plt.ylabel("log return")
     plt.legend()
     plt.title("Validation: Predicted vs True Next-Day Returns")
-    plt.show()
+    plt.savefig("prediction_plot.png")
+    plt.close()
+
 
 
 
