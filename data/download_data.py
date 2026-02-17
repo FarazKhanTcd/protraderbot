@@ -4,11 +4,11 @@ from pathlib import Path
 
 # -------- CONFIG --------
 TICKERS = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL"]
-START_DATE = "2018-01-01"
-END_DATE = "2024-01-01"
+START_DATE = "2002-01-01"
+END_DATE = "2026-01-01"
 # ------------------------
 
-output_dir = Path("data/raw")
+output_dir = Path("data/raw-stocks")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 for ticker in TICKERS:
