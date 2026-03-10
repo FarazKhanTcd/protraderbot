@@ -4,21 +4,30 @@ from model import StockGNN
 from graph_builder import build_dataset
 
 
-def train():
+dataset = build_dataset()
 
-    data = build_dataset()
+train_size = int(len(dataset) * 0.8)
 
-    model = StockGNN(
-        in_channels=data.x.shape[1],
-        hidden_channels=32,
-        out_channels=2
-    )
+train_dataset = dataset[:train_size]
+test_dataset = dataset[train_size:]
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+model = StockGNN(
+    in_channels=4,
+    hidden_channels=32,
+    out_channels=2
+)
+
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+
+for epoch in range(1, 101):
 
     model.train()
 
-    for epoch in range(1, 101):
+    total_loss = 0
+
+    for data in train_dataset:
 
         optimizer.zero_grad()
 
@@ -27,15 +36,27 @@ def train():
         loss = F.cross_entropy(out, data.y)
 
         loss.backward()
+
         optimizer.step()
 
-        if epoch % 10 == 0:
+        total_loss += loss.item()
+
+    if epoch % 10 == 0:
+
+        model.eval()
+
+        correct = 0
+        total = 0
+
+        for data in test_dataset:
+
+            out = model(data.x, data.edge_index)
 
             pred = out.argmax(dim=1)
-            acc = (pred == data.y).sum().item() / data.y.size(0)
 
-            print(f"Epoch {epoch} | Loss {loss:.4f} | Acc {acc:.4f}")
+            correct += (pred == data.y).sum().item()
+            total += data.y.size(0)
 
+        acc = correct / total
 
-if __name__ == "__main__":
-    train()
+        print(f"Epoch {epoch} | Loss {total_loss:.2f} | Test Acc {acc:.3f}")

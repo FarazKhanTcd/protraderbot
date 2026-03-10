@@ -1,8 +1,7 @@
-import pandas as pd
 import torch
-from pathlib import Path
 from torch_geometric.data import Data
-
+from pathlib import Path
+import pandas as pd
 
 DATA_DIR = Path("data/raw")
 
@@ -11,10 +10,13 @@ def load_prices():
     dfs = []
 
     for file in DATA_DIR.glob("*.csv"):
-        df = pd.read_csv(file)
+
+        df = pd.read_csv(file, skiprows=[1])
 
         ticker = file.stem
         df["Date"] = pd.to_datetime(df["Date"])
+        df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
+
         df = df[["Date", "Close"]]
         df = df.rename(columns={"Close": ticker})
 
@@ -32,65 +34,62 @@ def load_prices():
 
 
 def compute_returns(prices):
-    returns = prices.pct_change().dropna()
-    return returns
+    return prices.pct_change().dropna()
 
 
-def build_graph(returns, corr_threshold=0.5):
+def build_edges(returns, corr_threshold=0.5):
+
     corr = returns.corr()
 
-    num_nodes = corr.shape[0]
     edges = []
 
-    for i in range(num_nodes):
-        for j in range(num_nodes):
+    n = corr.shape[0]
+
+    for i in range(n):
+        for j in range(n):
 
             if i != j and abs(corr.iloc[i, j]) > corr_threshold:
                 edges.append([i, j])
 
-    edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
+    edge_index = torch.tensor(edges).t().contiguous()
 
     return edge_index
 
 
-def build_features(returns, window=30):
-    features = []
+def build_dataset(window=30):
 
-    last_window = returns.tail(window)
-
-    for col in last_window.columns:
-        series = last_window[col]
-
-        features.append([
-            series.mean(),
-            series.std(),
-            series.min(),
-            series.max(),
-        ])
-
-    x = torch.tensor(features, dtype=torch.float)
-
-    return x
-
-
-def build_labels(returns):
-    next_return = returns.iloc[-1]
-
-    labels = (next_return > 0).astype(int)
-
-    y = torch.tensor(labels.values, dtype=torch.long)
-
-    return y
-
-
-def build_dataset():
     prices = load_prices()
     returns = compute_returns(prices)
 
-    x = build_features(returns)
-    edge_index = build_graph(returns)
-    y = build_labels(returns)
+    edge_index = build_edges(returns)
 
-    data = Data(x=x, edge_index=edge_index, y=y)
+    dataset = []
 
-    return data
+    for t in range(window, len(returns) - 1):
+
+        window_data = returns.iloc[t-window:t]
+
+        features = []
+
+        for stock in window_data.columns:
+
+            s = window_data[stock]
+
+            features.append([
+                s.mean(),
+                s.std(),
+                s.min(),
+                s.max()
+            ])
+
+        x = torch.tensor(features, dtype=torch.float)
+
+        next_day = returns.iloc[t + 1]
+
+        y = torch.tensor((next_day > 0).astype(int).values)
+
+        data = Data(x=x, edge_index=edge_index, y=y)
+
+        dataset.append(data)
+
+    return dataset
