@@ -1,11 +1,34 @@
 from pathlib import Path
 
-import pandas as pd
 import yfinance as yf
 
 
 # -------- CONFIG --------
-TICKERS = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL"]
+TICKERS = [
+    # Technology
+    "AAPL", "MSFT", "NVDA", "AMD", "INTC",
+
+    # Communication Services
+    "GOOGL", "META", "NFLX", "DIS",
+
+    # Consumer Discretionary
+    "AMZN", "TSLA", "MCD", "NKE",
+
+    # Consumer Staples
+    "KO", "PEP", "WMT", "PG",
+
+    # Financials
+    "JPM", "BAC", "GS", "V",
+
+    # Healthcare
+    "JNJ", "PFE", "MRK", "UNH",
+
+    # Energy
+    "XOM", "CVX", "COP", "SLB",
+
+    # Industrials
+    "CAT", "BA", "HON", "UPS",
+]
 START_DATE = "2002-01-01"
 END_DATE = "2026-01-01"
 OUTPUT_DIR = Path("data/raw")
