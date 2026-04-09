@@ -43,8 +43,8 @@ relationships between assets** to produce diversified portfolio weights.
 ## 1. Clone the Repository
 
 ``` bash
-git clone https://github.com/yourusername/gat-portfolio-optimizer.git
-cd gat-portfolio-optimizer
+git clone https://github.com/FarazKhanTcd/protraderbot.git
+cd protraderbot
 ```
 
 ------------------------------------------------------------------------
